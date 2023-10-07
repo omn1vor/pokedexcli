@@ -10,10 +10,11 @@ import (
 type command struct {
 	name        string
 	description string
-	handler     func() error
+	handler     func()
 }
 
 var commands map[string]command
+var ctx *navigator
 
 func startRepl() {
 	commands = initCommands()
@@ -48,6 +49,16 @@ func initCommands() map[string]command {
 			description: "exits the Pokedex",
 			handler:     exit,
 		},
+		"map": {
+			name:        "map",
+			description: "gets next 20 Pokemon locations",
+			handler:     nextMaps,
+		},
+		"mapb": {
+			name:        "mapb",
+			description: "gets previous 20 Pokemon locations",
+			handler:     prevMaps,
+		},
 	}
 
 }
@@ -61,17 +72,43 @@ func cleanInput(input string) string {
 	return strings.ToLower(trimmed)
 }
 
-func displayHelpMessage() error {
+func displayHelpMessage() {
 	fmt.Println()
 	fmt.Println("Pokedex CLI usage:")
 	for _, v := range commands {
 		fmt.Println(v.name, "-", v.description)
 	}
 	fmt.Println()
-	return nil
 }
 
-func exit() error {
+func exit() {
 	os.Exit(0)
-	return nil
+}
+
+func nextMaps() {
+	url := baseUrl
+	if ctx != nil {
+		if ctx.next == nil {
+			fmt.Println("You have reached the end of locations list")
+			return
+		}
+		url = *ctx.next
+	}
+	ctx = getMaps(url)
+
+	for _, m := range ctx.maps {
+		fmt.Println(m)
+	}
+}
+
+func prevMaps() {
+	if ctx == nil || ctx.prev == nil {
+		fmt.Println("You have reached the end of locations list")
+		return
+	}
+	ctx = getMaps(*ctx.prev)
+
+	for _, m := range ctx.maps {
+		fmt.Println(m)
+	}
 }
