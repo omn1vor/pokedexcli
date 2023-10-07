@@ -1,7 +1,6 @@
 package pokecache
 
 import (
-	"fmt"
 	"sync"
 	"time"
 )
@@ -55,11 +54,9 @@ func (c *Cache) reapLoop() {
 	go func() {
 		for t := range ticker.C {
 			for k, v := range c.values {
-				fmt.Println("reap loop start")
 				elapsed := t.Sub(v.createdAt)
 				if elapsed > c.ttl {
 					delete(c.values, k)
-					fmt.Println("deleted ", k)
 				}
 			}
 		}
