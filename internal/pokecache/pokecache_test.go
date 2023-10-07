@@ -43,9 +43,7 @@ func TestReapLoop(t *testing.T) {
 	const key = "http://test1.org"
 
 	cache := NewCache(baseTime)
-	fmt.Println("cache created")
 	cache.Add(key, []byte("raw data1"))
-	fmt.Println("key added: ", key)
 
 	_, ok := cache.Get(key)
 	if !ok {
@@ -53,7 +51,6 @@ func TestReapLoop(t *testing.T) {
 	}
 
 	time.Sleep(waitTime)
-	fmt.Println("woke up")
 
 	_, ok = cache.Get(key)
 	if ok {
