@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strings"
 )
 
 type command struct {
@@ -21,7 +22,7 @@ func startRepl() {
 	showPrompt()
 
 	for scanner.Scan() {
-		token := scanner.Text()
+		token := cleanInput(scanner.Text())
 		cmd, ok := commands[token]
 
 		if !ok {
@@ -53,6 +54,11 @@ func initCommands() map[string]command {
 
 func showPrompt() {
 	fmt.Print("pokedex > ")
+}
+
+func cleanInput(input string) string {
+	trimmed := strings.TrimSpace(input)
+	return strings.ToLower(trimmed)
 }
 
 func displayHelpMessage() error {
