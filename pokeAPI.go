@@ -23,12 +23,13 @@ type result struct {
 	} `json:"results"`
 }
 
-const baseUrl string = "https://pokeapi.co/api/v2/location?limit=20"
+const baseUrl string = "https://pokeapi.co/api/v2/location?offset=0&limit=20"
 
 func getMaps(url string) *navigator {
 	mapData, ok := cache.Get(url)
 	if !ok {
 		mapData = getMapDataFromAPI(url)
+		cache.Add(url, mapData)
 	}
 
 	result := result{}
