@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
+
+	"github.com/omn1vor/pokedexcli/internal/pokecache"
 )
 
 type command struct {
@@ -15,6 +18,7 @@ type command struct {
 
 var commands map[string]command
 var ctx *navigator
+var cache = pokecache.NewCache(20 * time.Second)
 
 func startRepl() {
 	commands = initCommands()
