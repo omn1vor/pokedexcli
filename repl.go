@@ -11,9 +11,10 @@ import (
 )
 
 type command struct {
-	name        string
-	description string
-	handler     func()
+	name          string
+	description   string
+	handler       func(string)
+	needsArgument bool
 }
 
 var commands map[string]command
@@ -24,20 +25,33 @@ func startRepl() {
 	commands = initCommands()
 	scanner := bufio.NewScanner(os.Stdin)
 
-	showPrompt()
+	for {
+		showPrompt()
 
-	for scanner.Scan() {
-		token := cleanInput(scanner.Text())
-		cmd, ok := commands[token]
+		if !scanner.Scan() {
+			break
+		}
 
-		if !ok {
-			fmt.Println("Unknown command")
-			showPrompt()
+		tokens := cleanInput(scanner.Text())
+		if len(tokens) == 0 {
 			continue
 		}
 
-		cmd.handler()
-		showPrompt()
+		cmd, ok := commands[tokens[0]]
+		if !ok {
+			fmt.Println("Unknown command")
+			continue
+		}
+
+		arg := ""
+		if cmd.needsArgument {
+			if len(tokens) < 2 {
+				fmt.Println("This command needs an argument!")
+				continue
+			}
+			arg = tokens[1]
+		}
+		cmd.handler(arg)
 	}
 }
 
@@ -63,6 +77,13 @@ func initCommands() map[string]command {
 			description: "gets previous 20 Pokemon locations",
 			handler:     prevMaps,
 		},
+		"explore": {
+			name: "explore",
+			description: "explores the location, listing the Pokemon's names from the areas in this location. " +
+				"Requires a location name as a parameter",
+			handler:       explore,
+			needsArgument: true,
+		},
 	}
 
 }
@@ -71,12 +92,13 @@ func showPrompt() {
 	fmt.Print("pokedex > ")
 }
 
-func cleanInput(input string) string {
+func cleanInput(input string) []string {
 	trimmed := strings.TrimSpace(input)
-	return strings.ToLower(trimmed)
+	lowered := strings.ToLower(trimmed)
+	return strings.Fields(lowered)
 }
 
-func displayHelpMessage() {
+func displayHelpMessage(_ string) {
 	fmt.Println()
 	fmt.Println("Pokedex CLI usage:")
 	for _, v := range commands {
@@ -85,15 +107,15 @@ func displayHelpMessage() {
 	fmt.Println()
 }
 
-func exit() {
+func exit(_ string) {
 	os.Exit(0)
 }
 
-func nextMaps() {
+func nextMaps(_ string) {
 	url := baseUrl
 	if ctx != nil {
 		if ctx.next == nil {
-			fmt.Println("You have reached the end of locations list")
+
 			return
 		}
 		url = *ctx.next
@@ -105,7 +127,7 @@ func nextMaps() {
 	}
 }
 
-func prevMaps() {
+func prevMaps(_ string) {
 	if ctx == nil || ctx.prev == nil {
 		fmt.Println("You have reached the end of locations list")
 		return
@@ -114,5 +136,12 @@ func prevMaps() {
 
 	for _, m := range ctx.maps {
 		fmt.Println(m)
+	}
+}
+
+func explore(location string) {
+	pokemons := getPokemonsFromLocation(location)
+	for _, p := range pokemons {
+		fmt.Println(p)
 	}
 }

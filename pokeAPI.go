@@ -13,6 +13,22 @@ type navigator struct {
 	maps []string
 }
 
+type locationData struct {
+	Areas []struct {
+		Name string `json:"name"`
+		URL  string `json:"url"`
+	} `json:"areas"`
+}
+
+type areaData struct {
+	PokemonEncounters []struct {
+		Pokemon struct {
+			Name string `json:"name"`
+			URL  string `json:"url"`
+		} `json:"pokemon"`
+	} `json:"pokemon_encounters"`
+}
+
 type result struct {
 	Count    int     `json:"count"`
 	Next     *string `json:"next"`
@@ -24,11 +40,12 @@ type result struct {
 }
 
 const baseUrl string = "https://pokeapi.co/api/v2/location?offset=0&limit=20"
+const locationUrl string = "https://pokeapi.co/api/v2/location/"
 
 func getMaps(url string) *navigator {
 	mapData, ok := cache.Get(url)
 	if !ok {
-		mapData = getMapDataFromAPI(url)
+		mapData = getDataFromAPI(url)
 		cache.Add(url, mapData)
 	}
 
@@ -44,7 +61,7 @@ func getMaps(url string) *navigator {
 	return &navigator{prev: result.Previous, next: result.Next, maps: maps}
 }
 
-func getMapDataFromAPI(url string) []byte {
+func getDataFromAPI(url string) []byte {
 	res, err := http.Get(url)
 	if err != nil {
 		log.Fatalln("Can't get results from PokeAPI:", err)
@@ -60,4 +77,20 @@ func getMapDataFromAPI(url string) []byte {
 	}
 
 	return body
+}
+
+func getPokemonsFromLocation(location string) []string {
+	url := locationUrl + location
+	data, ok := cache.Get(url)
+	if !ok {
+		data = getDataFromAPI(url)
+		cache.Add(url, data)
+	}
+
+	result := locationData{}
+	if err := json.Unmarshal(data, &result); err != nil {
+		log.Fatalln("Can't deserialize results from PokeAPI:", err)
+	}
+
+	return []string{}
 }
