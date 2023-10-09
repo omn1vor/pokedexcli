@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"math/rand"
 	"os"
 	"strings"
 	"time"
@@ -19,7 +20,8 @@ type command struct {
 
 var commands map[string]command
 var ctx *navigator
-var cache = pokecache.NewCache(20 * time.Second)
+var cache = pokecache.NewCache(2 * time.Minute)
+var collection = map[string]*pokemonData{}
 
 func startRepl() {
 	commands = initCommands()
@@ -84,6 +86,13 @@ func initCommands() map[string]command {
 			handler:       explore,
 			needsArgument: true,
 		},
+		"catch": {
+			name: "catch",
+			description: "tries to catch a pokemon with given name. Chance to catch a pokemon depends on its base experience " +
+				"(more experience -> harder to catch)",
+			handler:       catch,
+			needsArgument: true,
+		},
 	}
 
 }
@@ -143,5 +152,19 @@ func explore(location string) {
 	pokemons := getPokemonsFromLocation(location)
 	for _, p := range pokemons {
 		fmt.Println(p)
+	}
+}
+
+func catch(name string) {
+	const skill = 35
+	pokemonData := getPokemonData(name)
+	check := rand.Intn(pokemonData.BaseExperience)
+	fmt.Printf("Throwing a Pokeball at %s...\n", name)
+	fmt.Printf("Your skill is %v, pokemon check is %v (out of %v)\n", skill, check, pokemonData.BaseExperience)
+	if skill >= check {
+		collection[name] = pokemonData
+		fmt.Println(name, "was caught!")
+	} else {
+		fmt.Println(name, "escaped!")
 	}
 }
