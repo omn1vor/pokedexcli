@@ -93,6 +93,12 @@ func initCommands() map[string]command {
 			handler:       catch,
 			needsArgument: true,
 		},
+		"inspect": {
+			name:          "inspect",
+			description:   "shows characteristics of a given pokemon. It works only on pokemons that you have caught",
+			handler:       inspect,
+			needsArgument: true,
+		},
 	}
 
 }
@@ -160,11 +166,31 @@ func catch(name string) {
 	pokemonData := getPokemonData(name)
 	check := rand.Intn(pokemonData.BaseExperience)
 	fmt.Printf("Throwing a Pokeball at %s...\n", name)
-	fmt.Printf("Your skill is %v, pokemon check is %v (out of %v)\n", skill, check, pokemonData.BaseExperience)
+	fmt.Printf("Your skill is %d, pokemon check is %d (out of %d)\n", skill, check, pokemonData.BaseExperience)
 	if skill >= check {
 		collection[name] = pokemonData
 		fmt.Println(name, "was caught!")
 	} else {
 		fmt.Println(name, "escaped!")
+	}
+}
+
+func inspect(name string) {
+	pokemonData, ok := collection[name]
+	if !ok {
+		fmt.Println("you have not caught that pokemon")
+		return
+	}
+
+	fmt.Println("Name: ", pokemonData.Name)
+	fmt.Println("Height: ", pokemonData.Height)
+	fmt.Println("Weight: ", pokemonData.Weight)
+	fmt.Println("Stats:")
+	for _, s := range pokemonData.Stats {
+		fmt.Printf("  -%s: %d\n", s.Stat.Name, s.BaseStat)
+	}
+	fmt.Println("Types:")
+	for _, t := range pokemonData.Types {
+		fmt.Printf("  -%s\n", t.Type.Name)
 	}
 }
