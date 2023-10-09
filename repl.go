@@ -99,6 +99,11 @@ func initCommands() map[string]command {
 			handler:       inspect,
 			needsArgument: true,
 		},
+		"pokedex": {
+			name:        "pokedex",
+			description: "prints all the pokemons that you have caught",
+			handler:     pokedex,
+		},
 	}
 
 }
@@ -170,6 +175,7 @@ func catch(name string) {
 	if skill >= check {
 		collection[name] = pokemonData
 		fmt.Println(name, "was caught!")
+		fmt.Println("You may now inspect it with the inspect command.")
 	} else {
 		fmt.Println(name, "escaped!")
 	}
@@ -178,7 +184,7 @@ func catch(name string) {
 func inspect(name string) {
 	pokemonData, ok := collection[name]
 	if !ok {
-		fmt.Println("you have not caught that pokemon")
+		fmt.Println("You have not caught that pokemon")
 		return
 	}
 
@@ -192,5 +198,17 @@ func inspect(name string) {
 	fmt.Println("Types:")
 	for _, t := range pokemonData.Types {
 		fmt.Printf("  -%s\n", t.Type.Name)
+	}
+}
+
+func pokedex(_ string) {
+	if len(collection) == 0 {
+		fmt.Println("Your Pokedex is empty")
+		return
+	}
+
+	fmt.Println("Your pokedex:")
+	for _, p := range collection {
+		fmt.Printf("  -%s\n", p.Name)
 	}
 }
