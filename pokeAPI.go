@@ -29,7 +29,7 @@ type areaData struct {
 	} `json:"pokemon_encounters"`
 }
 
-type result struct {
+type mapsChunk struct {
 	Count    int     `json:"count"`
 	Next     *string `json:"next"`
 	Previous *string `json:"previous"`
@@ -43,22 +43,40 @@ const baseUrl string = "https://pokeapi.co/api/v2/location?offset=0&limit=20"
 const locationUrl string = "https://pokeapi.co/api/v2/location/"
 
 func getMaps(url string) *navigator {
-	mapData, ok := cache.Get(url)
-	if !ok {
-		mapData = getDataFromAPI(url)
-		cache.Add(url, mapData)
-	}
+	data := getData(url)
+	mapsChunk := unmarshal[mapsChunk](data)
 
-	result := result{}
-	if err := json.Unmarshal(mapData, &result); err != nil {
-		log.Fatalln("Can't deserialize results from PokeAPI:", err)
-	}
-
-	maps := make([]string, len(result.Results))
-	for i, m := range result.Results {
+	maps := make([]string, len(mapsChunk.Results))
+	for i, m := range mapsChunk.Results {
 		maps[i] = m.Name
 	}
-	return &navigator{prev: result.Previous, next: result.Next, maps: maps}
+	return &navigator{prev: mapsChunk.Previous, next: mapsChunk.Next, maps: maps}
+}
+
+func getPokemonsFromLocation(location string) []string {
+	url := locationUrl + location
+	data := getData(url)
+
+	locationData := unmarshal[locationData](data)
+	pokemonNames := []string{}
+	for _, area := range locationData.Areas {
+		data = getData(area.URL)
+		areaData := unmarshal[areaData](data)
+		for _, pokemon := range areaData.PokemonEncounters {
+			pokemonNames = append(pokemonNames, pokemon.Pokemon.Name)
+		}
+	}
+
+	return pokemonNames
+}
+
+func getData(url string) []byte {
+	data, ok := cache.Get(url)
+	if !ok {
+		data = getDataFromAPI(url)
+		cache.Add(url, data)
+	}
+	return data
 }
 
 func getDataFromAPI(url string) []byte {
@@ -79,18 +97,10 @@ func getDataFromAPI(url string) []byte {
 	return body
 }
 
-func getPokemonsFromLocation(location string) []string {
-	url := locationUrl + location
-	data, ok := cache.Get(url)
-	if !ok {
-		data = getDataFromAPI(url)
-		cache.Add(url, data)
-	}
-
-	result := locationData{}
-	if err := json.Unmarshal(data, &result); err != nil {
+func unmarshal[T any](data []byte) T {
+	var obj T
+	if err := json.Unmarshal(data, &obj); err != nil {
 		log.Fatalln("Can't deserialize results from PokeAPI:", err)
 	}
-
-	return []string{}
+	return obj
 }

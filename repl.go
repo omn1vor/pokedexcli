@@ -89,7 +89,7 @@ func initCommands() map[string]command {
 }
 
 func showPrompt() {
-	fmt.Print("pokedex > ")
+	fmt.Print("\npokedex > ")
 }
 
 func cleanInput(input string) []string {
