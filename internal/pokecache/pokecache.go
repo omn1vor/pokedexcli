@@ -22,7 +22,7 @@ func NewCache(interval time.Duration) *Cache {
 		mu:     &sync.RWMutex{},
 		ttl:    interval,
 	}
-	cache.reapLoop()
+	go cache.reapLoop()
 	return &cache
 }
 
@@ -49,17 +49,22 @@ func (c *Cache) Get(key string) (val []byte, ok bool) {
 }
 
 func (c *Cache) reapLoop() {
-	ticker := time.NewTicker(c.ttl / 10)
+	ticker := time.NewTicker(c.ttl / 2)
 
-	go func() {
-		for t := range ticker.C {
-			for k, v := range c.values {
-				elapsed := t.Sub(v.createdAt)
-				if elapsed > c.ttl {
-					delete(c.values, k)
-				}
-			}
+	for t := range ticker.C {
+		reap(c, t)
+	}
+
+}
+
+func reap(c *Cache, t time.Time) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	for k, v := range c.values {
+		elapsed := t.Sub(v.createdAt)
+		if elapsed > c.ttl {
+			delete(c.values, k)
 		}
-	}()
-
+	}
 }
