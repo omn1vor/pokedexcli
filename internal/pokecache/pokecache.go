@@ -49,21 +49,19 @@ func (c *Cache) Get(key string) (val []byte, ok bool) {
 }
 
 func (c *Cache) reapLoop() {
-	ticker := time.NewTicker(c.ttl / 2)
-
-	for t := range ticker.C {
-		reap(c, t)
+	ticker := time.NewTicker(c.ttl)
+	for range ticker.C {
+		reap(c)
 	}
-
 }
 
-func reap(c *Cache, t time.Time) {
+func reap(c *Cache) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	for k, v := range c.values {
-		elapsed := t.Sub(v.createdAt)
-		if elapsed > c.ttl {
+		minBirthTime := time.Now().Add(-c.ttl)
+		if v.createdAt.Before(minBirthTime) {
 			delete(c.values, k)
 		}
 	}
