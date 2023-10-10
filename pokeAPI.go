@@ -174,8 +174,8 @@ func getDataFromAPI(url string) []byte {
 		log.Fatalln("Can't get results from PokeAPI:", err)
 	}
 
-	body, err := io.ReadAll(res.Body)
 	defer res.Body.Close()
+	body, err := io.ReadAll(res.Body)
 	if res.StatusCode > 299 {
 		log.Fatalf("PokeAPI response failed with status code: %d and\nbody: %s\n", res.StatusCode, body)
 	}

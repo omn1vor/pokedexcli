@@ -135,7 +135,7 @@ func nextMaps(_ string) {
 	url := baseUrl
 	if ctx != nil {
 		if ctx.next == nil {
-
+			fmt.Println("You have reached the end of locations list")
 			return
 		}
 		url = *ctx.next
@@ -149,7 +149,7 @@ func nextMaps(_ string) {
 
 func prevMaps(_ string) {
 	if ctx == nil || ctx.prev == nil {
-		fmt.Println("You have reached the end of locations list")
+		fmt.Println("You have reached the beginning of locations list")
 		return
 	}
 	ctx = getMaps(*ctx.prev)
